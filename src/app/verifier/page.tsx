@@ -13,8 +13,8 @@ import {
   DialogTitle,
   DialogDescription
 } from "@/components/ui/dialog";
-
-import { DialogTrigger } from "@radix-ui/react-dialog";
+import { DialogTrigger } from "@radix-ui/react-dialog"; // you added this earlier
+import { useState } from "react";                       // ✅ add this back
 
 
 export default function VerifierPage() {

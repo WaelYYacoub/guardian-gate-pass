@@ -1,6 +1,6 @@
 "use client";
 
-import { Pie, PieChart, Tooltip, Cell } from "recharts";
+import { Pie, PieChart, Tooltip } from "recharts";
 import {
   ChartContainer,
   ChartTooltipContent,
@@ -59,20 +59,11 @@ export function PassesStatusPieChart() {
             dataKey="value"
             nameKey="name"
             innerRadius={60}
-            outerRadius={80}
+            outerRadius={hoverIndex !== null ? 90 : 80} // 🔥 enlarge whole pie on hover
             strokeWidth={5}
             onMouseEnter={(_, idx) => setHoverIndex(idx)}
             onMouseLeave={() => setHoverIndex(null)}
-          >
-            {chartData.map((entry, idx) => (
-              <Cell
-                key={`cell-${idx}`}
-                fill={entry.fill}
-                // enlarge hovered slice
-                outerRadius={hoverIndex === idx ? 90 : 80}
-              />
-            ))}
-          </Pie>
+          />
         </PieChart>
       </ChartContainer>
     </>

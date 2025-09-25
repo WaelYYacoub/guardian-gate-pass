@@ -28,7 +28,7 @@ import PassPreviewDialog from "./pass-preview-dialog";
 import type { StandardPass, Pass } from "@/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
-// ✅ Zod schema with correct date validation
+// ✅ Zod schema – correct way to validate a required Date
 const formSchema = z.object({
   plateAlpha: z
     .string()
@@ -44,9 +44,9 @@ const formSchema = z.object({
   serial: z.string().min(1, "Required"),
   ownerCompany: z.string().min(1, "Required"),
   location: z.string().min(1, "Required"),
-  expiresAt: z
-    .date()
-    .refine((val) => !!val, { message: "Expiry date is required." }),
+  expiresAt: z.date().refine((val) => val instanceof Date && !isNaN(val.getTime()), {
+    message: "Expiry date is required.",
+  }),
 });
 
 const locations = [
@@ -94,8 +94,7 @@ export default function GenerateStandardForm() {
         serial: values.serial,
         ownerCompany: values.ownerCompany,
         location: values.location,
-        // ✅ Convert JS Date to Firestore Timestamp
-        expiresAt: Timestamp.fromDate(values.expiresAt),
+        expiresAt: Timestamp.fromDate(values.expiresAt), // ✅ Firestore expects Timestamp
         status: "active",
         createdAt: serverTimestamp(),
         createdBy: user.uid,
@@ -108,8 +107,7 @@ export default function GenerateStandardForm() {
       const finalPassData: Pass = {
         ...newPassData,
         id: docRef.id,
-        // ✅ Convert back to Date for preview
-        expiresAt: values.expiresAt,
+        expiresAt: values.expiresAt, // ✅ Convert back to Date for preview
         createdAt: new Date(),
         qrPayload: buildQrPayload(docRef.id, values.plateAlpha, values.plateNum, values.expiresAt),
       } as Pass;

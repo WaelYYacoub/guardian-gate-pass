@@ -29,16 +29,32 @@ import type { StandardPass, Pass } from "@/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
 const formSchema = z.object({
-  plateAlpha: z.string().min(1, "Required").max(4, "Max 4 chars").regex(/^[a-zA-Z]+$/, "Only letters allowed"),
-  plateNum: z.string().min(1, "Required").max(5, "Max 5 digits").regex(/^\d+$/, "Only numbers"),
+  plateAlpha: z
+    .string()
+    .min(1, "Required")
+    .max(4, "Max 4 chars")
+    .regex(/^[a-zA-Z]+$/, "Only letters allowed"),
+  plateNum: z
+    .string()
+    .min(1, "Required")
+    .max(5, "Max 5 digits")
+    .regex(/^\d+$/, "Only numbers"),
   ownerName: z.string().min(2, "Required"),
   serial: z.string().min(1, "Required"),
   ownerCompany: z.string().min(1, "Required"),
   location: z.string().min(1, "Required"),
-  expiresAt: z.date({ required_error: "Expiry date is required." }),
+  // ✅ fixed: removed unsupported { required_error }
+  expiresAt: z.date().refine((d) => d instanceof Date, {
+    message: "Expiry date is required.",
+  }),
 });
 
-const locations = ["SEC 01", "SEC 02", "SEC 03", "SEC 04", "SEC 05", "SEC 06", "SEC 07", "SEC 08", "SEC 09", "SEC 10", "LD 01", "LD 02", "LD 03", "LD 04", "LD 05", "LD 06", "Pump Station"];
+const locations = [
+  "SEC 01", "SEC 02", "SEC 03", "SEC 04", "SEC 05",
+  "SEC 06", "SEC 07", "SEC 08", "SEC 09", "SEC 10",
+  "LD 01", "LD 02", "LD 03", "LD 04", "LD 05", "LD 06",
+  "Pump Station"
+];
 
 export default function GenerateStandardForm() {
   const { user, loading: userLoading } = useAuth();
@@ -60,14 +76,18 @@ export default function GenerateStandardForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user) {
-      toast({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to create a pass." });
+      toast({
+        variant: "destructive",
+        title: "Authentication Error",
+        description: "You must be logged in to create a pass.",
+      });
       return;
     }
     setIsSubmitting(true);
 
     try {
       const passCollection = collection(db, "passes").withConverter(passConverter);
-      const newPassData: Omit<StandardPass, 'id' | 'qrPayload'> = {
+      const newPassData: Omit<StandardPass, "id" | "qrPayload"> = {
         type: "standard",
         plateAlpha: values.plateAlpha.toUpperCase(),
         plateNum: values.plateNum,
@@ -83,23 +103,26 @@ export default function GenerateStandardForm() {
         createdByCompany: user.company,
       };
 
-      const docRef = await addDoc(passCollection, newPassData as any); // Firestore will add id
+      const docRef = await addDoc(passCollection, newPassData as any);
 
-      const finalPassData = {
+      const finalPassData: Pass = {
         ...newPassData,
         id: docRef.id,
         qrPayload: buildQrPayload(docRef.id, values.plateAlpha, values.plateNum, values.expiresAt),
-        createdAt: new Date(), // For preview
-        expiresAt: values.expiresAt, // For preview
+        createdAt: new Date(), // for preview only
+        expiresAt: values.expiresAt, // for preview only
       };
 
-      setGeneratedPass(finalPassData as Pass);
+      setGeneratedPass(finalPassData);
       toast({ title: "Success", description: "Standard pass created successfully." });
       form.reset();
-
     } catch (error) {
       console.error("Error creating pass:", error);
-      toast({ variant: "destructive", title: "Error", description: "Failed to create pass. Please try again." });
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to create pass. Please try again.",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -110,20 +133,20 @@ export default function GenerateStandardForm() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <FormField
+            <FormField
               control={form.control}
               name="plateAlpha"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Plate Alpha</FormLabel>
                   <FormControl>
-                    <Input placeholder="ABC" {...field} style={{textTransform: 'uppercase'}}/>
+                    <Input placeholder="ABC" {...field} style={{ textTransform: "uppercase" }} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-              <FormField
+            <FormField
               control={form.control}
               name="plateNum"
               render={({ field }) => (
@@ -137,19 +160,21 @@ export default function GenerateStandardForm() {
               )}
             />
           </div>
-            <FormField
-              control={form.control}
-              name="ownerName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Owner's Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="John Doe" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
+          <FormField
+            control={form.control}
+            name="ownerName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Owner's Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="John Doe" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name="serial"
@@ -163,6 +188,7 @@ export default function GenerateStandardForm() {
               </FormItem>
             )}
           />
+
           <FormField
             control={form.control}
             name="ownerCompany"
@@ -176,28 +202,32 @@ export default function GenerateStandardForm() {
               </FormItem>
             )}
           />
-           <FormField
+
+          <FormField
             control={form.control}
             name="location"
             render={({ field }) => (
-                <FormItem>
-                    <FormLabel>Location</FormLabel>
-                     <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a location" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            {locations.map(loc => (
-                                <SelectItem key={loc} value={loc}>{loc}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                </FormItem>
+              <FormItem>
+                <FormLabel>Location</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a location" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {locations.map((loc) => (
+                      <SelectItem key={loc} value={loc}>
+                        {loc}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
             )}
           />
+
           <FormField
             control={form.control}
             name="expiresAt"
@@ -214,11 +244,7 @@ export default function GenerateStandardForm() {
                           !field.value && "text-muted-foreground"
                         )}
                       >
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
+                        {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                       </Button>
                     </FormControl>
@@ -237,16 +263,18 @@ export default function GenerateStandardForm() {
               </FormItem>
             )}
           />
+
           <Button type="submit" disabled={isSubmitting || userLoading} className="w-full">
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Create Pass
           </Button>
         </form>
       </Form>
+
       {generatedPass && (
-        <PassPreviewDialog 
-          pass={generatedPass} 
-          open={!!generatedPass} 
+        <PassPreviewDialog
+          pass={generatedPass}
+          open={!!generatedPass}
           onOpenChange={() => setGeneratedPass(null)}
         />
       )}

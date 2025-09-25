@@ -1,6 +1,6 @@
 "use client";
 
-import { Pie, PieChart, Tooltip, Sector } from "recharts";
+import { Pie, PieChart, Tooltip, Sector, PieProps } from "recharts";
 import {
   ChartContainer,
   ChartTooltipContent,
@@ -11,7 +11,7 @@ import { useData } from "@/context/data-provider";
 
 export function PassesStatusPieChart() {
   const { passes, loading } = useData();
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
 
   const chartData = useMemo(() => {
     if (!passes.length) return [];
@@ -48,8 +48,7 @@ export function PassesStatusPieChart() {
     );
   }
 
-  // 👇 custom active shape renderer
-  const renderActiveShape = (props: any) => {
+  const CustomActiveShape = (props: any) => {
     const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
     return (
       <Sector
@@ -76,10 +75,10 @@ export function PassesStatusPieChart() {
             nameKey="name"
             innerRadius={60}
             strokeWidth={5}
-            renderActiveShape={renderActiveShape}   // ✅ new prop
+            activeIndex={activeIndex}
+            activeShape={CustomActiveShape as PieProps["activeShape"]}
             onMouseEnter={(_, idx) => setActiveIndex(idx)}
-            onMouseLeave={() => setActiveIndex(null)}
-            activeIndex={activeIndex ?? undefined} // ✅ safe optional
+            onMouseLeave={() => setActiveIndex(undefined)}
           />
         </PieChart>
       </ChartContainer>

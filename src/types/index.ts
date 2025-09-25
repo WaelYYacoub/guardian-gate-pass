@@ -1,58 +1,47 @@
+// src/types/index.ts
+// ✅ Updated to include visitorCompany for VisitorPass
 import type { Timestamp } from "firebase/firestore";
 
-export type Role = 'owner' | 'admin' | 'user' | 'pending' | 'rejected';
-export type PassStatus = 'active' | 'expired' | 'revoked';
-export type PassType = 'standard' | 'visitor';
-
-export interface AppUser {
-  uid: string;
-  email: string;
-  fullName: string;
-  phone?: string;
-  company?: string;
-  companyId?: string;
-  workLocation?: string;
-  role: Role;
-  createdAt: any;
-  approvedBy?: string | null;
-  approvedAt?: Timestamp | null;
-}
-
-export interface QrPayload {
-    v: 1;
-    pid: string;
-    pa: string;
-    pn: string;
-    exp: number;
-}
+export type PassStatus = "active" | "expired" | "revoked";
 
 export interface BasePass {
   id: string;
-  type: PassType;
-  plateAlpha: string;
-  plateNum: string;
-  location: string;
-  expiresAt: Timestamp;
+  type: "standard" | "visitor";
   status: PassStatus;
-  createdAt: any;
+  createdAt: Timestamp;
   createdBy: string;
-  createdByName: string;
+  createdByName?: string;
   createdByCompany?: string;
-  qrPayload: QrPayload;
+  qrPayload: {
+    v: number; // payload version
+    pid: string; // pass id
+    pa: string; // plate alpha (for standard) or visitor name
+    pn: string; // plate num (for standard) or purpose
+    exp: number; // expiry timestamp in seconds
+  };
 }
 
+// --- STANDARD PASS ---
 export interface StandardPass extends BasePass {
-  type: 'standard';
+  type: "standard";
+  plateAlpha: string;
+  plateNum: string;
   ownerName: string;
   serial: string;
   ownerCompany: string;
+  location: string;
+  expiresAt: Timestamp;
 }
 
+// --- VISITOR PASS ---
 export interface VisitorPass extends BasePass {
-  type: 'visitor';
+  type: "visitor";
   visitorName: string;
-  personToVisit: string;
+  visitorCompany: string; // ✅ ADDED FIELD
   purpose: string;
+  location: string;
+  expiresAt: Timestamp;
 }
 
+// A Pass can be either Standard or Visitor
 export type Pass = StandardPass | VisitorPass;

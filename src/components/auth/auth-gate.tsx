@@ -1,13 +1,18 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2 } from "lucide-react";
+import type { UserRole } from "@/types";
 
-export default function AuthGate({ children }: { children: ReactNode }) {
-  const { user, loading, role } = useAuth();
+/**
+ * ✅ AuthGate
+ * - Redirects to /login if user is not logged in
+ * - Redirects to /login?pending=1 if user is pending or rejected
+ */
+export default function AuthGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const { user, role, loading } = useAuth(); // adjust to your hook's return values
 
   useEffect(() => {
     if (!loading) {
@@ -17,15 +22,9 @@ export default function AuthGate({ children }: { children: ReactNode }) {
         router.replace("/login?pending=1");
       }
     }
-  }, [user, loading, role, router]);
+  }, [user, role, loading, router]);
 
-  if (loading || !user || !role || role === 'pending' || role === 'rejected') {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  if (loading) return null; // or spinner
 
   return <>{children}</>;
 }

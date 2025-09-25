@@ -11,7 +11,7 @@ import { useData } from "@/context/data-provider";
 
 export function PassesStatusPieChart() {
   const { passes, loading } = useData();
-  const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   const chartData = useMemo(() => {
     if (!passes.length) return [];
@@ -48,11 +48,25 @@ export function PassesStatusPieChart() {
     );
   }
 
+  // 👇 custom active shape renderer
+  const renderActiveShape = (props: any) => {
+    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
+    return (
+      <Sector
+        cx={cx}
+        cy={cy}
+        innerRadius={innerRadius}
+        outerRadius={outerRadius + 6}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        fill={fill}
+      />
+    );
+  };
+
   return (
     <>
-      <CardDescription>
-        Total of {totalPasses} passes in the system
-      </CardDescription>
+      <CardDescription>Total of {totalPasses} passes in the system</CardDescription>
       <ChartContainer config={{}} className="h-[250px] w-full">
         <PieChart>
           <Tooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
@@ -62,10 +76,10 @@ export function PassesStatusPieChart() {
             nameKey="name"
             innerRadius={60}
             strokeWidth={5}
-            activeIndex={activeIndex}
-            activeShape={(props) => <Sector {...props} />}
+            renderActiveShape={renderActiveShape}   // ✅ new prop
             onMouseEnter={(_, idx) => setActiveIndex(idx)}
-            onMouseLeave={() => setActiveIndex(undefined)}
+            onMouseLeave={() => setActiveIndex(null)}
+            activeIndex={activeIndex ?? undefined} // ✅ safe optional
           />
         </PieChart>
       </ChartContainer>

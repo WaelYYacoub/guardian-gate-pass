@@ -15,6 +15,7 @@
     "@radix-ui/react-toast": "^1.2.15",
     "class-variance-authority": "^0.7.1",
     "date-fns": "^4.1.0",
+    "dotenv": "^17.2.2",
     "firebase": "^12.3.0",
     "html-to-image": "^1.11.13",
     "jsqr": "^1.4.0",
@@ -27,6 +28,7 @@
     "zod": "^4.1.11"
   },
   "devDependencies": {
+    "@types/dotenv": "^6.1.1",
     "@types/node": "^24.5.2",
     "@types/react": "^19.1.13",
     "typescript": "^5.9.2"

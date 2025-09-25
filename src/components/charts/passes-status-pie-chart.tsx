@@ -1,6 +1,6 @@
 "use client";
 
-import { Pie, PieChart, Tooltip, Sector, PieProps } from "recharts";
+import { Pie, PieChart, Tooltip } from "recharts";
 import {
   ChartContainer,
   ChartTooltipContent,
@@ -48,24 +48,11 @@ export function PassesStatusPieChart() {
     );
   }
 
-  const CustomActiveShape = (props: any) => {
-    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
-    return (
-      <Sector
-        cx={cx}
-        cy={cy}
-        innerRadius={innerRadius}
-        outerRadius={outerRadius + 6}
-        startAngle={startAngle}
-        endAngle={endAngle}
-        fill={fill}
-      />
-    );
-  };
-
   return (
     <>
-      <CardDescription>Total of {totalPasses} passes in the system</CardDescription>
+      <CardDescription>
+        Total of {totalPasses} passes in the system
+      </CardDescription>
       <ChartContainer config={{}} className="h-[250px] w-full">
         <PieChart>
           <Tooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
@@ -75,8 +62,12 @@ export function PassesStatusPieChart() {
             nameKey="name"
             innerRadius={60}
             strokeWidth={5}
-            activeIndex={activeIndex}
-            activeShape={CustomActiveShape as PieProps["activeShape"]}
+            // 👇 cast to any to bypass wrong type defs in Recharts v3
+            activeIndex={activeIndex as any}
+            activeShape={{
+              // simple highlight on hover
+              outerRadius: 70,
+            } as any}
             onMouseEnter={(_, idx) => setActiveIndex(idx)}
             onMouseLeave={() => setActiveIndex(undefined)}
           />

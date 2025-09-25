@@ -3,12 +3,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import {
-  addDoc,
-  collection,
-  serverTimestamp,
-  Timestamp,
-} from "firebase/firestore";
+import { addDoc, collection, serverTimestamp, Timestamp } from "firebase/firestore";
 import { db, passConverter } from "@/lib/firestore";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -30,15 +25,10 @@ import { useToast } from "@/hooks/use-toast";
 import { buildQrPayload } from "@/lib/qr";
 import { useState } from "react";
 import PassPreviewDialog from "./pass-preview-dialog";
-import type { StandardPass } from "@/types";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
+import type { StandardPass, Pass } from "@/types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
+// ✅ Zod schema with correct date validation
 const formSchema = z.object({
   plateAlpha: z
     .string()
@@ -54,34 +44,21 @@ const formSchema = z.object({
   serial: z.string().min(1, "Required"),
   ownerCompany: z.string().min(1, "Required"),
   location: z.string().min(1, "Required"),
-  expiresAt: z.date({ required_error: "Expiry date is required." }),
+  expiresAt: z
+    .date()
+    .refine((val) => !!val, { message: "Expiry date is required." }),
 });
 
 const locations = [
-  "SEC 01",
-  "SEC 02",
-  "SEC 03",
-  "SEC 04",
-  "SEC 05",
-  "SEC 06",
-  "SEC 07",
-  "SEC 08",
-  "SEC 09",
-  "SEC 10",
-  "LD 01",
-  "LD 02",
-  "LD 03",
-  "LD 04",
-  "LD 05",
-  "LD 06",
-  "Pump Station",
+  "SEC 01", "SEC 02", "SEC 03", "SEC 04", "SEC 05", "SEC 06", "SEC 07", "SEC 08", "SEC 09", "SEC 10",
+  "LD 01", "LD 02", "LD 03", "LD 04", "LD 05", "LD 06", "Pump Station"
 ];
 
 export default function GenerateStandardForm() {
   const { user, loading: userLoading } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [generatedPass, setGeneratedPass] = useState<StandardPass | null>(null);
+  const [generatedPass, setGeneratedPass] = useState<Pass | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -108,6 +85,7 @@ export default function GenerateStandardForm() {
 
     try {
       const passCollection = collection(db, "passes").withConverter(passConverter);
+
       const newPassData: Omit<StandardPass, "id" | "qrPayload"> = {
         type: "standard",
         plateAlpha: values.plateAlpha.toUpperCase(),
@@ -116,7 +94,8 @@ export default function GenerateStandardForm() {
         serial: values.serial,
         ownerCompany: values.ownerCompany,
         location: values.location,
-        expiresAt: Timestamp.fromDate(values.expiresAt), // ✅ convert Date to Timestamp
+        // ✅ Convert JS Date to Firestore Timestamp
+        expiresAt: Timestamp.fromDate(values.expiresAt),
         status: "active",
         createdAt: serverTimestamp(),
         createdBy: user.uid,
@@ -124,24 +103,19 @@ export default function GenerateStandardForm() {
         createdByCompany: user.company,
       };
 
-      const docRef = await addDoc(passCollection, newPassData);
+      const docRef = await addDoc(passCollection, newPassData as any);
 
-      const finalPassData: StandardPass = {
+      const finalPassData: Pass = {
         ...newPassData,
         id: docRef.id,
-        qrPayload: buildQrPayload(
-          docRef.id,
-          values.plateAlpha,
-          values.plateNum,
-          values.expiresAt
-        ),
-      };
+        // ✅ Convert back to Date for preview
+        expiresAt: values.expiresAt,
+        createdAt: new Date(),
+        qrPayload: buildQrPayload(docRef.id, values.plateAlpha, values.plateNum, values.expiresAt),
+      } as Pass;
 
       setGeneratedPass(finalPassData);
-      toast({
-        title: "Success",
-        description: "Standard pass created successfully.",
-      });
+      toast({ title: "Success", description: "Standard pass created successfully." });
       form.reset();
     } catch (error) {
       console.error("Error creating pass:", error);
@@ -167,11 +141,7 @@ export default function GenerateStandardForm() {
                 <FormItem>
                   <FormLabel>Plate Alpha</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="ABC"
-                      {...field}
-                      style={{ textTransform: "uppercase" }}
-                    />
+                    <Input placeholder="ABC" {...field} style={{ textTransform: "uppercase" }} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -270,16 +240,9 @@ export default function GenerateStandardForm() {
                     <FormControl>
                       <Button
                         variant={"outline"}
-                        className={cn(
-                          "pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
+                        className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                       >
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
+                        {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                       </Button>
                     </FormControl>
@@ -299,11 +262,7 @@ export default function GenerateStandardForm() {
             )}
           />
 
-          <Button
-            type="submit"
-            disabled={isSubmitting || userLoading}
-            className="w-full"
-          >
+          <Button type="submit" disabled={isSubmitting || userLoading} className="w-full">
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Create Pass
           </Button>
@@ -311,11 +270,7 @@ export default function GenerateStandardForm() {
       </Form>
 
       {generatedPass && (
-        <PassPreviewDialog
-          pass={generatedPass}
-          open={!!generatedPass}
-          onOpenChange={() => setGeneratedPass(null)}
-        />
+        <PassPreviewDialog pass={generatedPass} open={!!generatedPass} onOpenChange={() => setGeneratedPass(null)} />
       )}
     </>
   );

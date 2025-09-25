@@ -3,7 +3,12 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  serverTimestamp,
+  Timestamp,
+} from "firebase/firestore";
 import { db, passConverter } from "@/lib/firestore";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -16,11 +21,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, Loader2 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
@@ -29,7 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { buildQrPayload } from "@/lib/qr";
 import { useState } from "react";
 import PassPreviewDialog from "./pass-preview-dialog";
-import type { StandardPass, Pass } from "@/types";
+import type { StandardPass } from "@/types";
 import {
   Select,
   SelectContent,
@@ -38,7 +39,6 @@ import {
   SelectValue,
 } from "../ui/select";
 
-// ✅ Zod schema (simple + TS safe)
 const formSchema = z.object({
   plateAlpha: z
     .string()
@@ -54,8 +54,7 @@ const formSchema = z.object({
   serial: z.string().min(1, "Required"),
   ownerCompany: z.string().min(1, "Required"),
   location: z.string().min(1, "Required"),
-  // ❌ don’t use required_error / invalid_type_error (not supported in some zod versions)
-  expiresAt: z.date(),
+  expiresAt: z.date({ required_error: "Expiry date is required." }),
 });
 
 const locations = [
@@ -82,7 +81,7 @@ export default function GenerateStandardForm() {
   const { user, loading: userLoading } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [generatedPass, setGeneratedPass] = useState<Pass | null>(null);
+  const [generatedPass, setGeneratedPass] = useState<StandardPass | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -93,7 +92,6 @@ export default function GenerateStandardForm() {
       serial: "",
       ownerCompany: "",
       location: "",
-      expiresAt: undefined,
     },
   });
 
@@ -118,8 +116,7 @@ export default function GenerateStandardForm() {
         serial: values.serial,
         ownerCompany: values.ownerCompany,
         location: values.location,
-        // Firestore can accept JS Date
-        expiresAt: values.expiresAt,
+        expiresAt: Timestamp.fromDate(values.expiresAt), // ✅ convert Date to Timestamp
         status: "active",
         createdAt: serverTimestamp(),
         createdBy: user.uid,
@@ -127,9 +124,9 @@ export default function GenerateStandardForm() {
         createdByCompany: user.company,
       };
 
-      const docRef = await addDoc(passCollection, newPassData as any);
+      const docRef = await addDoc(passCollection, newPassData);
 
-      const finalPassData = {
+      const finalPassData: StandardPass = {
         ...newPassData,
         id: docRef.id,
         qrPayload: buildQrPayload(
@@ -138,13 +135,9 @@ export default function GenerateStandardForm() {
           values.plateNum,
           values.expiresAt
         ),
-        createdAt: new Date(), // preview only
-        expiresAt: values.expiresAt, // preview only
       };
 
-      // ✅ Quick safe cast to fix TS build error
-      setGeneratedPass(finalPassData as unknown as Pass);
-
+      setGeneratedPass(finalPassData);
       toast({
         title: "Success",
         description: "Standard pass created successfully.",
@@ -276,7 +269,7 @@ export default function GenerateStandardForm() {
                   <PopoverTrigger asChild>
                     <FormControl>
                       <Button
-                        variant="outline"
+                        variant={"outline"}
                         className={cn(
                           "pl-3 text-left font-normal",
                           !field.value && "text-muted-foreground"
@@ -311,9 +304,7 @@ export default function GenerateStandardForm() {
             disabled={isSubmitting || userLoading}
             className="w-full"
           >
-            {isSubmitting && (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            )}
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Create Pass
           </Button>
         </form>

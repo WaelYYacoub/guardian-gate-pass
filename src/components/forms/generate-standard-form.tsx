@@ -43,7 +43,9 @@ const formSchema = z.object({
   serial: z.string().min(1, "Required"),
   ownerCompany: z.string().min(1, "Required"),
   location: z.string().min(1, "Required"),
-  expiresAt: z.date({ invalid_type_error: "Expiry date is required." }),
+  expiresAt: z.date().refine((val) => val instanceof Date, {
+    message: "Expiry date is required.",
+  }),
 });
 
 const locations = [
@@ -105,7 +107,7 @@ export default function GenerateStandardForm() {
         serial: values.serial,
         ownerCompany: values.ownerCompany,
         location: values.location,
-        expiresAt: Timestamp.fromDate(values.expiresAt), // ✅ convert to Firestore Timestamp
+        expiresAt: Timestamp.fromDate(values.expiresAt), // ✅ Firestore Timestamp
         status: "active",
         createdAt: serverTimestamp(),
         createdBy: user.uid,
@@ -124,8 +126,8 @@ export default function GenerateStandardForm() {
           values.plateNum,
           values.expiresAt
         ),
-        createdAt: new Date(), // preview only
-        expiresAt: values.expiresAt, // preview only
+        createdAt: new Date(), // preview
+        expiresAt: values.expiresAt, // preview
       };
 
       setGeneratedPass(finalPassData as Pass);

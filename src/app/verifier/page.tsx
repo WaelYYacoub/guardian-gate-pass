@@ -11,9 +11,11 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
+  DialogDescription
 } from "@/components/ui/dialog";
-import { useState } from 'react';
+
+import { DialogTrigger } from "@radix-ui/react-dialog";
+
 
 export default function VerifierPage() {
   const [isScannerOpen, setIsScannerOpen] = useState(false);

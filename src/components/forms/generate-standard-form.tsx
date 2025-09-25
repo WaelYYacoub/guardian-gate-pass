@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { addDoc, collection, serverTimestamp, Timestamp } from "firebase/firestore";
 import { db, passConverter } from "@/lib/firestore";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -43,17 +43,27 @@ const formSchema = z.object({
   serial: z.string().min(1, "Required"),
   ownerCompany: z.string().min(1, "Required"),
   location: z.string().min(1, "Required"),
-  // ✅ fixed: removed unsupported { required_error }
-  expiresAt: z.date().refine((d) => d instanceof Date, {
-    message: "Expiry date is required.",
-  }),
+  expiresAt: z.date({ invalid_type_error: "Expiry date is required." }),
 });
 
 const locations = [
-  "SEC 01", "SEC 02", "SEC 03", "SEC 04", "SEC 05",
-  "SEC 06", "SEC 07", "SEC 08", "SEC 09", "SEC 10",
-  "LD 01", "LD 02", "LD 03", "LD 04", "LD 05", "LD 06",
-  "Pump Station"
+  "SEC 01",
+  "SEC 02",
+  "SEC 03",
+  "SEC 04",
+  "SEC 05",
+  "SEC 06",
+  "SEC 07",
+  "SEC 08",
+  "SEC 09",
+  "SEC 10",
+  "LD 01",
+  "LD 02",
+  "LD 03",
+  "LD 04",
+  "LD 05",
+  "LD 06",
+  "Pump Station",
 ];
 
 export default function GenerateStandardForm() {
@@ -83,8 +93,8 @@ export default function GenerateStandardForm() {
       });
       return;
     }
-    setIsSubmitting(true);
 
+    setIsSubmitting(true);
     try {
       const passCollection = collection(db, "passes").withConverter(passConverter);
       const newPassData: Omit<StandardPass, "id" | "qrPayload"> = {
@@ -95,7 +105,7 @@ export default function GenerateStandardForm() {
         serial: values.serial,
         ownerCompany: values.ownerCompany,
         location: values.location,
-        expiresAt: values.expiresAt,
+        expiresAt: Timestamp.fromDate(values.expiresAt), // ✅ convert to Firestore Timestamp
         status: "active",
         createdAt: serverTimestamp(),
         createdBy: user.uid,
@@ -105,15 +115,20 @@ export default function GenerateStandardForm() {
 
       const docRef = await addDoc(passCollection, newPassData as any);
 
-      const finalPassData: Pass = {
+      const finalPassData = {
         ...newPassData,
         id: docRef.id,
-        qrPayload: buildQrPayload(docRef.id, values.plateAlpha, values.plateNum, values.expiresAt),
-        createdAt: new Date(), // for preview only
-        expiresAt: values.expiresAt, // for preview only
+        qrPayload: buildQrPayload(
+          docRef.id,
+          values.plateAlpha,
+          values.plateNum,
+          values.expiresAt
+        ),
+        createdAt: new Date(), // preview only
+        expiresAt: values.expiresAt, // preview only
       };
 
-      setGeneratedPass(finalPassData);
+      setGeneratedPass(finalPassData as Pass);
       toast({ title: "Success", description: "Standard pass created successfully." });
       form.reset();
     } catch (error) {
@@ -140,7 +155,11 @@ export default function GenerateStandardForm() {
                 <FormItem>
                   <FormLabel>Plate Alpha</FormLabel>
                   <FormControl>
-                    <Input placeholder="ABC" {...field} style={{ textTransform: "uppercase" }} />
+                    <Input
+                      placeholder="ABC"
+                      {...field}
+                      style={{ textTransform: "uppercase" }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -238,7 +257,7 @@ export default function GenerateStandardForm() {
                   <PopoverTrigger asChild>
                     <FormControl>
                       <Button
-                        variant={"outline"}
+                        variant="outline"
                         className={cn(
                           "pl-3 text-left font-normal",
                           !field.value && "text-muted-foreground"

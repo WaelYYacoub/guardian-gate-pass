@@ -1,6 +1,6 @@
 "use client";
 
-import { Pie, PieChart, Tooltip } from "recharts";
+import { Pie, PieChart, Tooltip, Cell } from "recharts";
 import {
   ChartContainer,
   ChartTooltipContent,
@@ -11,7 +11,7 @@ import { useData } from "@/context/data-provider";
 
 export function PassesStatusPieChart() {
   const { passes, loading } = useData();
-  const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
   const chartData = useMemo(() => {
     if (!passes.length) return [];
@@ -50,9 +50,7 @@ export function PassesStatusPieChart() {
 
   return (
     <>
-      <CardDescription>
-        Total of {totalPasses} passes in the system
-      </CardDescription>
+      <CardDescription>Total of {totalPasses} passes in the system</CardDescription>
       <ChartContainer config={{}} className="h-[250px] w-full">
         <PieChart>
           <Tooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
@@ -61,16 +59,20 @@ export function PassesStatusPieChart() {
             dataKey="value"
             nameKey="name"
             innerRadius={60}
+            outerRadius={80}
             strokeWidth={5}
-            // 👇 cast to any to bypass wrong type defs in Recharts v3
-            activeIndex={activeIndex as any}
-            activeShape={{
-              // simple highlight on hover
-              outerRadius: 70,
-            } as any}
-            onMouseEnter={(_, idx) => setActiveIndex(idx)}
-            onMouseLeave={() => setActiveIndex(undefined)}
-          />
+            onMouseEnter={(_, idx) => setHoverIndex(idx)}
+            onMouseLeave={() => setHoverIndex(null)}
+          >
+            {chartData.map((entry, idx) => (
+              <Cell
+                key={`cell-${idx}`}
+                fill={entry.fill}
+                // enlarge hovered slice
+                outerRadius={hoverIndex === idx ? 90 : 80}
+              />
+            ))}
+          </Pie>
         </PieChart>
       </ChartContainer>
     </>

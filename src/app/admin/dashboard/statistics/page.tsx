@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { PassesByMonthChart } from '@/components/charts/passes-by-month-chart';
+import PassesByMonthChart from "@/components/charts/passes-by-month-chart";
 import { PassesStatusPieChart } from '@/components/charts/passes-status-pie-chart';
 import { PassesByLocationChart } from '@/components/charts/passes-by-location-chart';
 import { PassesByCompanyChart } from '@/components/charts/passes-by-company-chart';

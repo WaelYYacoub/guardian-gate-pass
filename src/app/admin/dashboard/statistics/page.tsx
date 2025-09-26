@@ -3,22 +3,16 @@
 import { Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-// ✅ Fixed imports — all charts are default exports
-import PassesByMonthChart from "@/components/charts/passes-by-month-chart";
-import PassesStatusPieChart from "@/components/charts/passes-status-pie-chart";
-import PassesByLocationChart from "@/components/charts/passes-by-location-chart";
-import PassesByCompanyChart from "@/components/charts/passes-by-company-chart";
+import { PassesByMonthChart } from "@/components/charts/passes-by-month-chart";
+import { PassesStatusPieChart } from "@/components/charts/passes-status-pie-chart";
+import { PassesByLocationChart } from "@/components/charts/passes-by-location-chart";
+import { PassesByCompanyChart } from "@/components/charts/passes-by-company-chart";
 
-import { getAllPasses } from "@/lib/firestore";
+import { getPasses } from "@/lib/firestore"; // ✅ fixed
 import type { Pass } from "@/types";
 
-// 🔹 Server data fetching (Next.js 13+ server action)
-async function fetchPasses(): Promise<Pass[]> {
-  return await getAllPasses();
-}
-
 export default async function StatisticsPage() {
-  const passes = await fetchPasses();
+  const passes: Pass[] = await getPasses();
 
   return (
     <div className="space-y-6">

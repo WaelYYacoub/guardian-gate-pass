@@ -1,72 +1,70 @@
-import { Suspense } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import PassesByMonthChart from "@/components/charts/passes-by-month-chart";
-import { PassesStatusPieChart } from '@/components/charts/passes-status-pie-chart';
-import { PassesByLocationChart } from '@/components/charts/passes-by-location-chart';
-import { PassesByCompanyChart } from '@/components/charts/passes-by-company-chart';
-import { BarChart, PieChart, Building, MapPin } from 'lucide-react';
-import { UsageInsights } from '@/components/charts/usage-insights';
+"use client";
 
-export default function StatisticsPage() {
+import { Suspense } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+// ✅ Fixed imports — all charts are default exports
+import PassesByMonthChart from "@/components/charts/passes-by-month-chart";
+import PassesStatusPieChart from "@/components/charts/passes-status-pie-chart";
+import PassesByLocationChart from "@/components/charts/passes-by-location-chart";
+import PassesByCompanyChart from "@/components/charts/passes-by-company-chart";
+
+import { getAllPasses } from "@/lib/firestore";
+import type { Pass } from "@/types";
+
+// 🔹 Server data fetching (Next.js 13+ server action)
+async function fetchPasses(): Promise<Pass[]> {
+  return await getAllPasses();
+}
+
+export default async function StatisticsPage() {
+  const passes = await fetchPasses();
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-headline text-3xl font-bold">Pass Statistics</h1>
-        <p className="text-muted-foreground">
-          Visualize pass data and gain insights into usage patterns.
-        </p>
-      </div>
+      <h1 className="text-2xl font-bold tracking-tight">Pass Statistics</h1>
 
-      <Suspense fallback={<p>Loading insights...</p>}>
-        <UsageInsights />
-      </Suspense>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Passes Created per Month</CardTitle>
+          </CardHeader>
+          <CardContent className="h-[300px]">
+            <Suspense fallback={<p>Loading chart...</p>}>
+              <PassesByMonthChart passes={passes} />
+            </Suspense>
+          </CardContent>
+        </Card>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center justify-between text-lg">
-              Passes by Month <BarChart className="h-5 w-5 text-muted-foreground" />
-            </CardTitle>
+            <CardTitle>Pass Status Distribution</CardTitle>
           </CardHeader>
-          <CardContent>
-            <Suspense fallback={<div className="h-[250px] w-full animate-pulse rounded-md bg-muted" />}>
-              <PassesByMonthChart />
+          <CardContent className="h-[300px]">
+            <Suspense fallback={<p>Loading chart...</p>}>
+              <PassesStatusPieChart passes={passes} />
             </Suspense>
           </CardContent>
         </Card>
+
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center justify-between text-lg">
-              Pass Status <PieChart className="h-5 w-5 text-muted-foreground" />
-            </CardTitle>
+            <CardTitle>Passes by Location</CardTitle>
           </CardHeader>
-          <CardContent>
-            <Suspense fallback={<div className="h-[250px] w-full animate-pulse rounded-md bg-muted" />}>
-              <PassesStatusPieChart />
+          <CardContent className="h-[300px]">
+            <Suspense fallback={<p>Loading chart...</p>}>
+              <PassesByLocationChart passes={passes} />
             </Suspense>
           </CardContent>
         </Card>
+
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center justify-between text-lg">
-              Passes by Company <Building className="h-5 w-5 text-muted-foreground" />
-            </CardTitle>
+            <CardTitle>Passes by Company</CardTitle>
           </CardHeader>
-          <CardContent>
-             <Suspense fallback={<div className="h-[250px] w-full animate-pulse rounded-md bg-muted" />}>
-              <PassesByCompanyChart />
-            </Suspense>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between text-lg">
-              Passes by Location <MapPin className="h-5 w-5 text-muted-foreground" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-             <Suspense fallback={<div className="h-[250px] w-full animate-pulse rounded-md bg-muted" />}>
-              <PassesByLocationChart />
+          <CardContent className="h-[300px]">
+            <Suspense fallback={<p>Loading chart...</p>}>
+              <PassesByCompanyChart passes={passes} />
             </Suspense>
           </CardContent>
         </Card>

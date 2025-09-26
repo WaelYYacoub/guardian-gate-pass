@@ -1,25 +1,18 @@
 "use client";
 
-import { ReactNode } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import type { UserRole } from "@/types";
+import type { Role } from "@/types";
 
-/**
- * ✅ RoleGate
- * - Only renders children if user role is included in `allow`
- */
-interface RoleGateProps {
-  allow: UserRole[];
-  children: ReactNode;
-  fallback?: ReactNode; // optional element if access denied
+interface Props {
+  allowed: Role[];
+  children: React.ReactNode;
 }
 
-export default function RoleGate({ allow, children, fallback = null }: RoleGateProps) {
-  const { role } = useAuth(); // adjust to your hook
+export default function RoleGate({ allowed, children }: Props) {
+  const { user, loading } = useAuth();
 
-  if (role && allow.includes(role)) {
-    return <>{children}</>;
-  }
+  if (loading) return <div className="p-6 text-center">Checking role...</div>;
+  if (!user || !allowed.includes(user.role)) return <div className="p-6 text-center text-red-500">Access Denied</div>;
 
-  return <>{fallback}</>;
+  return <>{children}</>;
 }

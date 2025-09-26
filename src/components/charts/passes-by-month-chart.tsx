@@ -1,42 +1,25 @@
 "use client";
 
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid
 } from "recharts";
 import { getMonth, isThisYear } from "date-fns";
 import type { Pass } from "@/types";
 
-interface PassesByMonthChartProps {
-  passes: Pass[];
-}
-
-export default function PassesByMonthChart({ passes }: PassesByMonthChartProps) {
+export default function PassesByMonthChart({ passes }: { passes: Pass[] }) {
   const monthlyData = Array.from({ length: 12 }, (_, i) => ({
     month: new Date(0, i).toLocaleString("default", { month: "short" }),
-    active: 0,
-    expired: 0,
-    revoked: 0,
+    active: 0, expired: 0, revoked: 0
   }));
 
-  passes.forEach((pass) => {
-    // ✅ Normalize Firestore Timestamp or JS Date
-    const createdAtValue = pass.createdAt as any;
-    const createdAtDate =
-      createdAtValue instanceof Date
-        ? createdAtValue
-        : createdAtValue?.toDate?.() ?? new Date();
-
-    if (isThisYear(createdAtDate)) {
-      const monthIndex = getMonth(createdAtDate);
-      if (pass.status === "active") monthlyData[monthIndex].active += 1;
-      if (pass.status === "expired") monthlyData[monthIndex].expired += 1;
-      if (pass.status === "revoked") monthlyData[monthIndex].revoked += 1;
+  passes.forEach((p) => {
+    const val: any = p.createdAt;
+    const date = val?.toDate ? val.toDate() : val instanceof Date ? val : new Date();
+    if (isThisYear(date)) {
+      const m = getMonth(date);
+      if (p.status === "active") monthlyData[m].active++;
+      if (p.status === "expired") monthlyData[m].expired++;
+      if (p.status === "revoked") monthlyData[m].revoked++;
     }
   });
 

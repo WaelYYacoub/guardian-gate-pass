@@ -43,7 +43,6 @@ import {
   SelectValue,
 } from "../ui/select";
 
-// ✅ simplified zod schema (no invalid/required_error since TS build was failing)
 const formSchema = z.object({
   plateAlpha: z
     .string()
@@ -59,7 +58,7 @@ const formSchema = z.object({
   serial: z.string().min(1, "Required"),
   ownerCompany: z.string().min(1, "Required"),
   location: z.string().min(1, "Required"),
-  expiresAt: z.date(), // simple Date
+  expiresAt: z.date(),
 });
 
 const locations = [
@@ -113,9 +112,7 @@ export default function GenerateStandardForm() {
     setIsSubmitting(true);
 
     try {
-      const passCollection = collection(db, "passes").withConverter(
-        passConverter
-      );
+      const passCollection = collection(db, "passes").withConverter(passConverter);
       const newPassData: Omit<StandardPass, "id" | "qrPayload"> = {
         type: "standard",
         plateAlpha: values.plateAlpha.toUpperCase(),
@@ -124,7 +121,6 @@ export default function GenerateStandardForm() {
         serial: values.serial,
         ownerCompany: values.ownerCompany,
         location: values.location,
-        // ✅ store as Firestore Timestamp
         expiresAt: Timestamp.fromDate(values.expiresAt),
         status: "active",
         createdAt: serverTimestamp(),
@@ -135,7 +131,6 @@ export default function GenerateStandardForm() {
 
       const docRef = await addDoc(passCollection, newPassData as any);
 
-      // ✅ preview uses Date but cast whole object to Pass to satisfy TS
       const finalPassData = {
         ...newPassData,
         id: docRef.id,
@@ -179,11 +174,7 @@ export default function GenerateStandardForm() {
                 <FormItem>
                   <FormLabel>Plate Alpha</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="ABC"
-                      {...field}
-                      style={{ textTransform: "uppercase" }}
-                    />
+                    <Input placeholder="ABC" {...field} style={{ textTransform: "uppercase" }} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -260,9 +251,7 @@ export default function GenerateStandardForm() {
                   </FormControl>
                   <SelectContent>
                     {locations.map((loc) => (
-                      <SelectItem key={loc} value={loc}>
-                        {loc}
-                      </SelectItem>
+                      <SelectItem key={loc} value={loc}>{loc}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -281,17 +270,13 @@ export default function GenerateStandardForm() {
                   <PopoverTrigger asChild>
                     <FormControl>
                       <Button
-                        variant={"outline"}
+                        variant="outline"
                         className={cn(
                           "pl-3 text-left font-normal",
                           !field.value && "text-muted-foreground"
                         )}
                       >
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
+                        {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                       </Button>
                     </FormControl>
@@ -311,11 +296,7 @@ export default function GenerateStandardForm() {
             )}
           />
 
-          <Button
-            type="submit"
-            disabled={isSubmitting || userLoading}
-            className="w-full"
-          >
+          <Button type="submit" disabled={isSubmitting || userLoading} className="w-full">
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Create Pass
           </Button>

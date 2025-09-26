@@ -1,62 +1,46 @@
-// ===========================
-// ✅ User roles
-// ===========================
-export type UserRole = "admin" | "manager" | "user" | "pending" | "rejected";
+export type Role = "admin" | "manager" | "user" | "pending" | "rejected";
 
-// ===========================
-// ✅ Pass status
-// ===========================
 export type PassStatus = "active" | "expired" | "revoked";
 
-// ===========================
-// ✅ Base user shape (used by auth hooks)
-// ===========================
 export interface AppUser {
-  uid: string;
+  id: string;
   email: string;
-  displayName: string; // ✅ If you want fullName instead, rename this to fullName
-  role: UserRole;
+  fullName: string;           // ✅ added for sidebar welcome
+  role: Role;
+  createdAt: any;             // Firestore Timestamp | Date
 }
 
-// ===========================
-// ✅ Passes
-// ===========================
 export interface BasePass {
   id: string;
-  type: "standard" | "visitor";
+  createdAt: any;             // Firestore Timestamp | Date
+  expiresAt: any;             // Firestore Timestamp | Date
   status: PassStatus;
-  createdAt: Date; // or firebase.firestore.Timestamp if you always store Timestamp
-  createdBy: string; // user.uid
-  createdByCompany?: string;
+  type: "standard" | "visitor";
   qrPayload: {
-    v: number; // version
-    pid: string; // pass id
-    pa: string; // pass alpha part (plate)
-    pn: string; // pass number part
-    exp: number; // expiry timestamp
+    v: number;
+    pid: string;
+    pa: string;
+    pn: string;
+    exp: number;
   };
+  createdBy: string;
+  createdByCompany?: string;
 }
 
-// -------- STANDARD PASS --------
 export interface StandardPass extends BasePass {
   type: "standard";
+  plateNumber: string;
   ownerName: string;
   ownerCompany: string;
-  vehiclePlateAlpha: string;
-  vehiclePlateNumber: string;
   location: string;
-  expiresAt: Date; // or Timestamp if you prefer, but match firestore use
 }
 
-// -------- VISITOR PASS --------
 export interface VisitorPass extends BasePass {
   type: "visitor";
   visitorName: string;
   visitorCompany: string;
   purpose: string;
   location: string;
-  expiresAt: Date; // or Timestamp
 }
 
-// Union
 export type Pass = StandardPass | VisitorPass;

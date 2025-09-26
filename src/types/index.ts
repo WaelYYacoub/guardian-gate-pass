@@ -1,53 +1,62 @@
-// --------------------------------------------------
-// ✅ User & Pass Type Definitions
-// --------------------------------------------------
+// ===========================
+// ✅ User roles
+// ===========================
+export type UserRole = "admin" | "manager" | "user" | "pending" | "rejected";
 
-export type UserRole =
-  | "admin"    // first user — approved by default, can approve others
-  | "manager"  // needs admin approval
-  | "user"     // needs admin approval
-  | "pending"  // waiting for admin approval
-  | "rejected"; // explicitly denied by admin
+// ===========================
+// ✅ Pass status
+// ===========================
+export type PassStatus = "active" | "expired" | "revoked";
 
-export type PassStatus =
-  | "active"   // valid now
-  | "expired"  // automatically expired after date/time
-  | "revoked"; // manually canceled/denied by admin/manager/user
-
-// Generic user model (adjust to your Firestore document shape)
+// ===========================
+// ✅ Base user shape (used by auth hooks)
+// ===========================
 export interface AppUser {
   uid: string;
   email: string;
-  displayName?: string;
+  displayName: string; // ✅ If you want fullName instead, rename this to fullName
   role: UserRole;
-  createdAt?: any; // Firestore timestamp
 }
 
-// Generic pass models (adjust to your Firestore document shape)
+// ===========================
+// ✅ Passes
+// ===========================
 export interface BasePass {
   id: string;
-  createdAt: any; // Firestore Timestamp
-  expiresAt: any; // Firestore Timestamp
+  type: "standard" | "visitor";
   status: PassStatus;
-  createdBy: string; // uid
+  createdAt: Date; // or firebase.firestore.Timestamp if you always store Timestamp
+  createdBy: string; // user.uid
   createdByCompany?: string;
+  qrPayload: {
+    v: number; // version
+    pid: string; // pass id
+    pa: string; // pass alpha part (plate)
+    pn: string; // pass number part
+    exp: number; // expiry timestamp
+  };
 }
 
+// -------- STANDARD PASS --------
 export interface StandardPass extends BasePass {
   type: "standard";
-  plateAlpha: string;
-  plateNumber: string;
   ownerName: string;
   ownerCompany: string;
+  vehiclePlateAlpha: string;
+  vehiclePlateNumber: string;
   location: string;
+  expiresAt: Date; // or Timestamp if you prefer, but match firestore use
 }
 
+// -------- VISITOR PASS --------
 export interface VisitorPass extends BasePass {
   type: "visitor";
   visitorName: string;
   visitorCompany: string;
   purpose: string;
   location: string;
+  expiresAt: Date; // or Timestamp
 }
 
+// Union
 export type Pass = StandardPass | VisitorPass;

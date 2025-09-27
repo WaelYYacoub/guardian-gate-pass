@@ -9,10 +9,12 @@ import PassesByLocationChart from "@/components/charts/passes-by-location-chart"
 import PassesByCompanyChart from "@/components/charts/passes-by-company-chart";
 
 import { getPasses } from "@/lib/firestore";
-import type { BasePass } from "@/types"; // ✅ use the union type we actually have
+import type { StandardPass, VisitorPass, BatchPass } from "@/types"; // ✅ use your real exported pass types
+
+type AnyPass = StandardPass | VisitorPass | BatchPass;
 
 export default async function StatisticsPage() {
-  const passes: BasePass[] = await getPasses();
+  const passes: AnyPass[] = await getPasses();
 
   return (
     <div className="space-y-6">

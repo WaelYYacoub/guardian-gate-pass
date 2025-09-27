@@ -5,8 +5,8 @@ export type PassType = "standard" | "visitor";
 export interface StandardPass {
   id: string;
   type: "standard";
-  plateAlpha: string;       // ✅ add
-  plateNum: string;         // ✅ add
+  plateAlpha: string;
+  plateNum: string;
   ownerName: string;
   serial: string;
   location: string;
@@ -21,8 +21,8 @@ export interface StandardPass {
 export interface VisitorPass {
   id: string;
   type: "visitor";
-  plateAlpha: string;       // ✅ add
-  plateNum: string;         // ✅ add
+  plateAlpha: string;
+  plateNum: string;
   ownerName: string;
   location: string;
   company?: string;
@@ -32,3 +32,5 @@ export interface VisitorPass {
   status: PassStatus;
   qrPayload: string;
 }
+
+export type Pass = StandardPass | VisitorPass;  // ✅ add this

@@ -1,4 +1,6 @@
 // src/types/index.ts
+export type Role = "admin" | "manager" | "user" | "pending" | "rejected"; // ✅ Add this
+
 export type PassStatus = "active" | "expired" | "revoked";
 export type PassType = "standard" | "visitor";
 
@@ -33,4 +35,4 @@ export interface VisitorPass {
   qrPayload: string;
 }
 
-export type Pass = StandardPass | VisitorPass;  // ✅ add this
+export type Pass = StandardPass | VisitorPass;

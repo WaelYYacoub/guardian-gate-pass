@@ -1,46 +1,37 @@
+// src/components/charts/passes-status-pie-chart.tsx
 "use client";
 
-import { Pie, PieChart, Tooltip } from "recharts";
-import { useMemo, useState } from "react";
-import { CardDescription } from "../ui/card";
-import { useData } from "@/context/data-provider";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
+import type { Pass } from "@/types";
 
-export default function PassesStatusPieChart() {
-  const { passes, loading } = useData();
-  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+type Props = { passes: Pass[] };
 
-  const chartData = useMemo(() => {
-    if (!passes.length) return [];
-    const counts = passes.reduce((acc, p) => {
-      acc[p.status] = (acc[p.status] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-    return [
-      { name: "Active", value: counts.active || 0, fill: "hsl(var(--chart-1))" },
-      { name: "Expired", value: counts.expired || 0, fill: "hsl(var(--chart-2))" },
-      { name: "Revoked", value: counts.revoked || 0, fill: "hsl(var(--chart-3))" }
-    ].filter(i => i.value > 0);
-  }, [passes]);
+export default function PassesStatusPieChart({ passes }: Props) {
+  const data = [
+    { name: "Active", value: passes.filter((p) => p.status === "active").length },
+    { name: "Expired", value: passes.filter((p) => p.status === "expired").length },
+    { name: "Revoked", value: passes.filter((p) => p.status === "revoked").length },
+  ];
 
-  if (loading) return <div className="h-[250px] flex items-center justify-center">Loading chart...</div>;
-  if (!chartData.length) return <div className="h-[250px] flex items-center justify-center">No data</div>;
+  const COLORS = ["#22c55e", "#f97316", "#ef4444"];
 
   return (
-    <>
-      <CardDescription>Total of {passes.length} passes</CardDescription>
-      <PieChart width={300} height={300}>
-        <Tooltip />
+    <ResponsiveContainer width="100%" height="100%">
+      <PieChart>
         <Pie
-          data={chartData}
+          data={data}
           dataKey="value"
           nameKey="name"
-          innerRadius={60}
-          outerRadius={hoverIndex !== null ? 90 : 80}
-          strokeWidth={5}
-          onMouseEnter={(_, idx) => setHoverIndex(idx)}
-          onMouseLeave={() => setHoverIndex(null)}
-        />
+          outerRadius={80}
+          label
+        >
+          {data.map((_, index) => (
+            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+          ))}
+        </Pie>
+        <Tooltip />
+        <Legend />
       </PieChart>
-    </>
+    </ResponsiveContainer>
   );
 }

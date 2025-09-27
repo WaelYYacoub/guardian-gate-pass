@@ -3,7 +3,6 @@ import { db, passConverter } from "@/lib/firestore";
 import type { StandardPass } from "@/types";
 
 async function createStandardPass(values: FormValues, user: any) {
-  // 1) Create a doc ref to get an ID
   const passRef = doc(collection(db, "passes"));
   const id = passRef.id;
 
@@ -20,7 +19,6 @@ async function createStandardPass(values: FormValues, user: any) {
     status: "active",
     createdAt: serverTimestamp(),
     createdBy: user.uid,
-    // ✅ Generate a payload (this can be as simple as JSON.stringify)
     qrPayload: JSON.stringify({
       id,
       plate: `${values.plateAlpha.toUpperCase()}${values.plateNum}`,
@@ -35,3 +33,6 @@ async function createStandardPass(values: FormValues, user: any) {
 
   alert("Standard pass created successfully!");
 }
+
+// 👇 Add this line
+export default createStandardPass;

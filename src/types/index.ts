@@ -1,46 +1,34 @@
-export type Role = "admin" | "manager" | "user" | "pending" | "rejected";
-
+// src/types/index.ts
 export type PassStatus = "active" | "expired" | "revoked";
+export type PassType = "standard" | "visitor";
 
-export interface AppUser {
+export interface StandardPass {
   id: string;
-  email: string;
-  fullName: string;           // ✅ added for sidebar welcome
-  role: Role;
-  createdAt: any;             // Firestore Timestamp | Date
-}
-
-export interface BasePass {
-  id: string;
-  createdAt: any;             // Firestore Timestamp | Date
-  expiresAt: any;             // Firestore Timestamp | Date
-  status: PassStatus;
-  type: "standard" | "visitor";
-  qrPayload: {
-    v: number;
-    pid: string;
-    pa: string;
-    pn: string;
-    exp: number;
-  };
-  createdBy: string;
-  createdByCompany?: string;
-}
-
-export interface StandardPass extends BasePass {
   type: "standard";
-  plateNumber: string;
+  plateAlpha: string;       // ✅ add
+  plateNum: string;         // ✅ add
   ownerName: string;
-  ownerCompany: string;
+  serial: string;
   location: string;
+  company?: string;
+  createdBy: string;
+  createdAt: Date;
+  expiresAt: Date;
+  status: PassStatus;
+  qrPayload: string;
 }
 
-export interface VisitorPass extends BasePass {
+export interface VisitorPass {
+  id: string;
   type: "visitor";
-  visitorName: string;
-  visitorCompany: string;
-  purpose: string;
+  plateAlpha: string;       // ✅ add
+  plateNum: string;         // ✅ add
+  ownerName: string;
   location: string;
+  company?: string;
+  createdBy: string;
+  createdAt: Date;
+  expiresAt: Date;
+  status: PassStatus;
+  qrPayload: string;
 }
-
-export type Pass = StandardPass | VisitorPass;

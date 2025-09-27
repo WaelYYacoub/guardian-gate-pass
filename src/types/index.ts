@@ -1,38 +1,39 @@
 // src/types/index.ts
-export type Role = "admin" | "manager" | "user" | "pending" | "rejected"; // ✅ Add this
+export type UserRole = "admin" | "manager" | "user" | "pending" | "rejected";
 
 export type PassStatus = "active" | "expired" | "revoked";
-export type PassType = "standard" | "visitor";
 
-export interface StandardPass {
+export interface BasePass {
   id: string;
-  type: "standard";
+  type: "standard" | "visitor";
   plateAlpha: string;
   plateNum: string;
   ownerName: string;
+  /** ✅ added for company name */
+  ownerCompany?: string;
   serial: string;
   location: string;
-  company?: string;
-  createdBy: string;
-  createdAt: Date;
-  expiresAt: Date;
+  expiresAt: Date;       // Firestore auto converts to Timestamp
   status: PassStatus;
-  qrPayload: string;
+  createdAt: Date;
+  createdBy: string;     // uid of creator
+  qrPayload: string;     // encoded payload for QR
 }
 
-export interface VisitorPass {
-  id: string;
+export type StandardPass = Omit<BasePass, "type"> & {
+  type: "standard";
+};
+
+export type VisitorPass = Omit<BasePass, "type"> & {
   type: "visitor";
-  plateAlpha: string;
-  plateNum: string;
-  ownerName: string;
-  location: string;
-  company?: string;
-  createdBy: string;
-  createdAt: Date;
-  expiresAt: Date;
-  status: PassStatus;
-  qrPayload: string;
-}
+};
 
 export type Pass = StandardPass | VisitorPass;
+
+export interface AppUser {
+  uid: string;
+  email: string;
+  fullName: string;
+  role: UserRole;  // admin, manager, user, pending, rejected
+  createdAt: Date;
+}

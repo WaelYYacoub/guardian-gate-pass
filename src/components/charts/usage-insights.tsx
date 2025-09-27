@@ -1,65 +1,73 @@
+// src/components/charts/usage-insights.tsx
 "use client";
 
-import { useEffect, useState } from "react";
-import { generatePassUsageInsights } from "@/ai/flows/generate-pass-usage-insights";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Lightbulb, Loader2 } from "lucide-react";
-import { useData } from "@/context/data-provider";
+import React, { useMemo } from "react";
+import type { Pass } from "@/types";
 
-export function UsageInsights() {
-  const { passes, loading: dataLoading } = useData();
-  const [insights, setInsights] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+interface UsageInsightsProps {
+  passes: Pass[];
+}
 
-  useEffect(() => {
-    async function getInsights() {
-      if (dataLoading) return;
-      
-      try {
-        setLoading(true);
-        if (passes.length === 0) {
-          setInsights("Not enough data to generate insights. Please create more passes.");
-          return;
-        }
+const UsageInsights: React.FC<UsageInsightsProps> = ({ passes }) => {
+  const insights = useMemo(() => {
+    if (!passes || passes.length === 0) return null;
 
-        // Use a sample for performance if there are many passes
-        const passesForAnalysis = passes.length > 100 ? passes.slice(0, 100) : passes;
+    // Convert passes to JSON-safe data for analysis
+    const passDataString = JSON.stringify(
+      passes.map((p) => ({
+        ...p,
+        createdAt: p.createdAt.toISOString(), // ✅ removed .toDate()
+        expiresAt: p.expiresAt.toISOString(), // ✅ removed .toDate()
+      }))
+    );
 
-        const passDataString = JSON.stringify(passesForAnalysis.map(p => ({
-            ...p,
-            createdAt: p.createdAt.toDate().toISOString(),
-            expiresAt: p.expiresAt.toDate().toISOString(),
-        })));
-        
-        const result = await generatePassUsageInsights({ passData: passDataString });
-        setInsights(result.insights);
-      } catch (e) {
-        console.error("Error generating insights:", e);
-        setError("Could not generate AI insights at this time.");
-      } finally {
-        setLoading(false);
-      }
-    }
-    getInsights();
-  }, [passes, dataLoading]);
+    // Simple analysis: count passes by type and status
+    const typeCount: Record<string, number> = {};
+    const statusCount: Record<string, number> = {};
+
+    passes.forEach((p) => {
+      typeCount[p.type] = (typeCount[p.type] || 0) + 1;
+      statusCount[p.status] = (statusCount[p.status] || 0) + 1;
+    });
+
+    return { typeCount, statusCount, total: passes.length };
+  }, [passes]);
+
+  if (!insights) return <p>No passes available for analysis.</p>;
 
   return (
-    <Alert>
-      <Lightbulb className="h-4 w-4" />
-      <AlertTitle className="font-headline">AI-Powered Insights</AlertTitle>
-      <AlertDescription>
-        {(loading || dataLoading) && (
-          <div className="flex items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Generating analysis of recent pass activity...</span>
-          </div>
-        )}
-        {error && <p className="text-destructive">{error}</p>}
-        {!loading && !dataLoading && !error && (
-            <div className="prose prose-sm dark:prose-invert" dangerouslySetInnerHTML={{ __html: insights.replace(/\n/g, '<br />') }} />
-        )}
-      </AlertDescription>
-    </Alert>
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold">Usage Insights</h3>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="rounded-md border p-4">
+          <h4 className="font-medium mb-2">Pass Types</h4>
+          <ul className="space-y-1">
+            {Object.entries(insights.typeCount).map(([type, count]) => (
+              <li key={type}>
+                <strong>{type}</strong>: {count}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="rounded-md border p-4">
+          <h4 className="font-medium mb-2">Statuses</h4>
+          <ul className="space-y-1">
+            {Object.entries(insights.statusCount).map(([status, count]) => (
+              <li key={status}>
+                <strong>{status}</strong>: {count}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      <p className="text-sm text-muted-foreground mt-2">
+        Total passes analyzed: {insights.total}
+      </p>
+    </div>
   );
-}
+};
+
+export default UsageInsights;
